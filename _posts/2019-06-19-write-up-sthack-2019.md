@@ -11,8 +11,8 @@ Avant de commencer l'explication de ce challenge, je tiens à remercier la [@Tea
 On peut remercier [@sth4ck](https://twitter.com/sth4ck "Twitter de la sthack") pour cette magnifique photo du classement 2019. ;)
 
 # Etape 1 : Tour d'horizon du challenger
-Movie rater est un site où l'administrateur donne sa note sur les films de "hacker" préférés. Ce site est composé de trois pages accessibles pour le visiteur. Nous verrons par la suite qu'il existe d'autres pages utilisés par l'administrateur. Voici les trois pages:
-* Home : La page home qui n'a pas beaucoup d'interêt
+Movie rater est un site où l'administrateur donne sa note sur les films de "hacker" préférés. Ce site est composé de trois pages accessibles pour le visiteur. Nous verrons par la suite qu'il existe d'autres pages utilisées par l'administrateur. Voici les trois pages:
+* Home : La page home qui n'a pas beaucoup d'intérêt
 * Movies : Cette page affiche toutes les affiches des films et leurs notes.
 ![Page movies](/assets/images/sthack_2019/movie_rater_page_movies.png)
 * Rate : Cette page montre la photo de l'affiche et sa note ainsi que champs textbox pour donner son avis sur la note du film si le visiteur n'est pas d'accord avec la note donnée.
@@ -24,11 +24,11 @@ Après ce tour d'horizon du site, on remarque que les pages Movies et Rate sont 
 ![Page rate](/assets/images/sthack_2019/faille_lfi.png)
 
 
-Pour rappel une LFI permet notamment de lire le code php de la page à grace aux fonctions de filtrage de PHP. Pour récupérer le code des pages du site, nous allons utiliser le filtre base 64 de PHP comme ceci:
+Pour rappel une LFI permet notamment de lire le code php de la page à grâce aux fonctions de filtrage de PHP. Pour récupérer le code des pages du site, nous allons utiliser le filtre base 64 de PHP comme ceci:
 {% highlight php %}
 php://filter/convert.base64-encode/resource=movies
 {% endhighlight %} 
-Toutefois pour que cela fonctionne, il faut faire un urlencode de ce payload.
+Toutefois, pour que cela fonctionne, il faut faire un urlencode de ce payload.
 {% highlight php %}
 php%3A%2F%2Ffilter%2Fconvert.base64-encode%2Fresource%3Dmovies
 {% endhighlight %} 
@@ -42,7 +42,7 @@ Dans l'index.php, nous pouvons voir la faille LFI qui nous a permis de récupér
 {% endhighlight %} 
 
 ## head.php
-Petit détail amusant, un blocage de SQLmap apparaît dans le fichier head.php. Bah oui, on est à la Sthack, tu vas quand même pas t'amuser à utiliser un outil qui te permet de te l'a coulé douce la main dans le slip pendant le CTF !.
+Petit détail amusant, un blocage de SQLmap apparaît dans le fichier head.php. Bah oui, on est à la Sthack, tu vas quand même pas t'amuser à utiliser un outil qui te permet de te l'a couler douce la main dans le slip pendant le CTF !.
 {% highlight php %}
 <?php
 	$user_agent = $_SERVER['HTTP_USER_AGENT']; 
@@ -57,7 +57,7 @@ Petit détail amusant, un blocage de SQLmap apparaît dans le fichier head.php. 
 ## rate.php
 Ce fichier rate.php correspond à la page d'affichage et commentaire de la note du film. Dans celle-ci, nous pouvons voir plusieurs choses intéressantes. 
 
-Premièrement, il y a un contrôle des entrées utilisateur au niveau du paramètre "id" de l'URL. Seul des chiffres peuvent être entré dans ce paramètre. Donc pas une voie utilisable pour la réussite de ce challenge.
+Premièrement, il y a un contrôle des entrées utilisateur au niveau du paramètre "id" de l'URL. Seul des chiffres peuvent être entrés dans ce paramètre. Donc ce n'est pas une voie utilisable pour la réussite de ce challenge.
 {% highlight php %}
 <?php
 	if(!preg_match("/^[0-9]{1,2}$/", $_GET['id']))
@@ -79,7 +79,7 @@ Deuxièmement, on peut voir que le commentaire envoyé à l’admin passe par un
 ## change-rate.php
 Récupérons donc le code de cette page à l'aide de la faille LFI !
 
-Dans le code cette page, nous voyons que le commentaire est stocké dans une table qui semble temporaire et qui va permettre à l'administrateur de site de lire ce commentaire.
+Dans le code cette page, nous voyons que le commentaire est stocké dans une table qui semble temporaire et qui va permettre à l'administrateur du site de lire ce commentaire.
 
 {% highlight php %}
 <?php
@@ -103,11 +103,11 @@ Pour tester si la faille est présente, on va envoyer le payload suivant:
 
 Ce payload va simplement rediriger l'administrateur vers une autre adresse. Ici j'utilise le logiciel ngrok qui permet de créer un tunnel de son localhost vers internet, c'est très pratique lorsque l'on veut partager un site en cours de développement en local via internet.
 
-Ici l'utilisation de ngrok va permettre de voir les requêtes effectuées sur notre adresse à grace au panneau de suivi d'activité du logiciel.
+Ici l'utilisation de ngrok va permettre de voir les requêtes effectuées sur notre adresse à grâce au panneau de suivi d'activité du logiciel.
 
 ![viewing_panel](/assets/images/sthack_2019/ngrock-test-lfi.png)
 
-Nous pouvoir voir que deux requêtes sont arrivées, cela signifie qu'il y a bien une faille XSS lorsque l'administrateur lit les commentaires. 
+Nous pouvons voir que deux requêtes sont arrivées, cela signifie qu'il y a bien une faille XSS lorsque l'administrateur lit les commentaires. 
 
 Exploitons cette faille pour connaître le code de la partie accessible par l'admin. Pour cela, on va récupérer le nom du fichier php utilisé pour lire les commentaires. Comme ceux-ci:
 
@@ -158,7 +158,7 @@ Pour exploiter cette faille, il faut avoir accès à la page mais seul l'adminis
 ![cannont_access_stats](/assets/images/sthack_2019/cannot-access-stats.png)
 
 
-Pour ce faire, il faut passer par la faille XSS pour forcer l'administrateur à effectuer l'attaque. Ce qui fait que l'exploit va se dérouler en 3 étapes :
+Pour ce faire, il faut passer par la faille XSS pour forcer l'administrateur à effectuer l'attaque. Ce qui fait que l'exploit va se dérouler en trois étapes :
 * Envoi de l'exploit via le commentaire et lecture du commentaire par l'administrateur
 * A la lecture du commentaire, récupération en GET de la page stats.php avec en paramètre de la page, l'exploit SQLi
 * Envoi du résultat de la requête GET en POST vers ngrok, pour que l'on puisse lire le résultat de l'exploit
@@ -180,9 +180,9 @@ Avant d'exploiter la faille SQLi, regardons de plus près la structure du payloa
 	</script>
 {% endhighlight %}
 
-La première ligne permet d'inclure JQuery dans la page afin de simplifier l'envoi des requêtes GET et POST. Ensuite la requête GET déclarée avec le $.get qui va retourner dans son callback le code html de la page stats.php. 
+La première ligne permet d'inclure JQuery dans la page afin de simplifier l'envoi des requêtes GET et POST. Ensuite, la requête GET déclarée avec le $.get qui va retourner dans son callback le code html de la page stats.php. 
 
-Dans ce même callback, on déclare la requête post ($.post) qui va nous renvoyer ce code html. Avant le renvoi vers ngrok, le code html est décodé (decodeURIComponent) pour ne pas a avoir à le décoder à chaque lecture de la requête.
+Dans ce même callback, on déclare la requête post ($.post) qui va nous renvoyer ce code html. Avant le renvoi vers ngrok, le code html est décodé (decodeURIComponent) pour ne pas à avoir à le décoder à chaque lecture de la requête.
 
 Maintenant que nous avons mis en place notre structure pour exploiter la faille SQLi, il faut chercher à comment exploiter cette faille. Le site n'ayant pas d'interface de login connu, inutile de chercher le mot de passe de l'administrateur dans la base de données. On va donc upload un reverse shell sur le serveur, ce qui est plus utile et plus fun que de récupérer un mot de passe.
 
@@ -194,7 +194,7 @@ Essai avec une colonne.
 		"/the-admin-secure-interface/stats.php?stats_id=' union select '666"
 {% endhighlight %}
 
-Il y a une erreur php, ce qui signifie que ce n'est pas une colonne. Essai pour deux colonnes :
+Il y a une erreur php, ce qui signifie que ce n'est pas une colonne. Tentative pour deux colonnes :
 
 {% highlight js %}
 		"/the-admin-secure-interface/stats.php?stats_id=' union select '666', '667"
@@ -218,17 +218,17 @@ Pour établir la connexion reverse shell, il faut exécuter le code php. Pour ce
 		"?page=../../../tmp/rs"
 {% endhighlight %}
 
-Une fois la connexion établie, et après une recherche dans les dossiers du serveur, on tombe sur /home/acid_burn qui possède une binaire nommé getFlag.
+Une fois la connexion établie et après une recherche dans les dossiers du serveur, on tombe sur /home/acid_burn qui possède un binaire nommé getFlag.
 
-On execute le binaire et nous demande un pseudoterminal([pty](https://fr.wikipedia.org/wiki/Pseudo_terminal "Wikipédia pseudoterminal") ) pour s'exécuter.
+On execute le binaire et nous demande un pseudoterminal([TTY](https://fr.wikipedia.org/wiki/Pseudo_terminal "Wikipédia pseudoterminal") ) pour s'exécuter.
 
-Il y a plein de façon d'obtenir un shell pty, le site  [netsec](https://netsec.ws/?p=337 "Liste des shell pty") à lister plusieurs façons d'obtenir un pty shell. Pour ce challenge, on utilise python en faisant :
+Il y a plein de façon d'obtenir un shell TTY, le site  [netsec](https://netsec.ws/?p=337 "Liste des shell pty") à lister plusieurs façons d'obtenir un pty shell. Pour ce challenge, on utilise python en faisant :
 
 {% highlight bash %}
 	python -c 'import pty;pty.spawn("/bin/bash")'
 {% endhighlight %}
 
-Une fois le shell pty obtenu, on peut exécuter le binaire est récupérer le flag :
+Une fois le shell TTY obtenu, on peut exécuter le binaire est récupéré le flag :
 
 {% highlight text %}
 	Sql14nDAC5RF_R3alY?!
