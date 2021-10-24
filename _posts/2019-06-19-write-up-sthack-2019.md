@@ -10,7 +10,7 @@ Avant de commencer l'explication de ce challenge, je tiens à remercier la [@Tea
 
 On peut remercier [@sth4ck](https://twitter.com/sth4ck "Twitter de la sthack") pour cette magnifique photo du classement 2019. ;)
 
-# Etape 1 : Tour d'horizon du challenger
+# Etape 1 : Tour d'horizon du challenge
 Movie rater est un site où l'administrateur donne sa note sur les films de "hacker" préférés. Ce site est composé de trois pages accessibles pour le visiteur. Nous verrons par la suite qu'il existe d'autres pages utilisées par l'administrateur. Voici les trois pages:
 * Home : La page home qui n'a pas beaucoup d'intérêt
 * Movies : Cette page affiche toutes les affiches des films et leurs notes.
