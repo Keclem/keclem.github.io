@@ -254,6 +254,7 @@ Une fois le code placer sur la gauche, il reste plus qu'à l'exécuter autant de
 ![flag_found](/assets/images/sthack_2021_tetris/flag_found.png)
 
 Et le flag est : **1Lov3TetrisGame#RIPJonasNeubauer**
+
 PS : Jonas Neubauer a été 7 fois champion du monde de tetris et est décédé au mois de Janvier 2021. Ce flag était un petit hommage à ce champion.
 # Solution 2 - Cracker le jeu 
 Cette solution a été utilisée par la team "ZenSec" et présentée dans leur write-up disponible [ici](https://zensecctf.github.io/sthack2021/2021-10-19-sthack2021-tetris "Write up craking"), donc n'hésitez pas à jeter un œil.
