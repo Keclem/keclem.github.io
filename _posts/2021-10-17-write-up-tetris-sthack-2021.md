@@ -87,7 +87,8 @@ Pour extraire le fichier de metadata dans AssetStudio, il faut tout d'abord réc
 Pour cela, il faut regarder dans l'onglet "Réseau" de la console du navigateur est récupéré le fichier TetrisChallenge.data.
 
 Une fois récupéré, il faut extraire le fichier .data dans AssetStudio en faisant :
-[extract_file](/assets/images/sthack_2021_tetris/asset_studio_extract_file.PNG)
+
+![extract_file](/assets/images/sthack_2021_tetris/asset_studio_extract_file.PNG)
 
 Puis, il faut sélectionner le fichier .dat puis sélectionner le dossier de réception
 
