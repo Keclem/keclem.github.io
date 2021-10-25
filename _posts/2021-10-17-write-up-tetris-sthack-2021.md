@@ -8,7 +8,7 @@ Lorsque l'on arrive dans le challenge, on a deux modes possible :
 - Le mode "challenge" qui contient le flag
 - Et le mode "fun", ajouter pour que les participants puissent jouer si certain s'ennuie ou veulent se libérer un peu l'esprit avec un petit tetris.
 
-![home](/assets/images/sthack_2021/home.png)
+![home](/assets/images/sthack_2021_tetris/home.png)
 
 Dans ces deux modes, les règles sont les mêmes que le Tetris classique. 
 Il y a donc plusieurs niveaux, qui permettent d'obtenir plus de points qu'une piece est posée et lorsqu'une ou plusieurs lignes sont détruites. Si plusieurs lignes sont détruites à la fois, ça permet d'obtenir plus de points d'un coup.
@@ -18,7 +18,7 @@ Il y a donc plusieurs niveaux, qui permettent d'obtenir plus de points qu'une pi
 Le but du mode challenge est de faire le maximum de score en 3 minutes.
 En jouant, on se rend compte très vite que le score n'est pas battable en jouant normalement. Ce qui veut dire que Nitnick du 33 a triché, mais comment ? 
 
-![challenge mode](/assets/images/sthack_2021/mode_challenge.png)
+![challenge mode](/assets/images/sthack_2021_tetris/mode_challenge.png)
 
 # Trois solutions possibles
 La solution que j'avais pensé pour ce challenge était de faire un script qui permet de réaliser ce highscore. Cette solution est présenté dans la Solution 1. 
